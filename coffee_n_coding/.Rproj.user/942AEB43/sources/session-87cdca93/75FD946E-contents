@@ -1,0 +1,72 @@
+---
+title: "reshaping_data"
+output: html_document
+date: "2023-03-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+first to load in the libraries you will use
+```{r load libraries}
+library(tidyverse)
+library(dplyr)
+```
+
+now to load in the data we are using
+```{r}
+meta_data_fp <- "C:/Users/c76210ml/OneDrive - The University of Manchester/Desktop/coffee_n_coding/data/metatable-master.xlsx"
+
+meta_data <- readxl::read_xlsx(meta_data_fp)
+
+data_fp <- "C:/Users/c76210ml/OneDrive - The University of Manchester/Desktop/coffee_n_coding/data/metadata.tsv"
+
+data <- readr::read_tsv(data_fp)
+
+```
+
+Now that the data is loaded in you can see how it looks by looking at the top right window of your screen
+
+you'll see a variable called 'data', which is your sequencing data, and one called 'meta_data', which is the conditions for your experiments
+
+if you click on 'data', it will open a tab that looks like an excel spreadsheet
+additionally, you can click the arrow next to the variable name in the Environment screen (top right) and it will list the variable names for you and a preview of the data
+
+Now we can start to reshape the data for your purposes
+
+```{r reshape data, combine meta and data tables}
+
+meta_data <- meta_data[-1,]
+
+colnames(meta_data)[2] <- 'condition'
+
+meta_data <- meta_data %>%  pivot_wider(names_from = 'SampleID', values_from = 'condition') 
+
+meta_data <- janitor::clean_names(meta_data)
+
+meta_data<- meta_data %>% 
+  pivot_longer(everything())
+
+data <- data[-1,] 
+
+#renaming the columsn F2 Control... etc to replace the space with an underscore for manipulation purposes
+data <- janitor::clean_names(data)
+
+data <- data %>% 
+  pivot_longer(cols = dv1:f5_control)%>% 
+  left_join(meta_data, by= 'name')
+
+colnames(data)[6] <- 'hits_to_bacteria_sequence'
+colnames(data)[7] <- 'condition'
+```
+
+now if you look at our 'data' you can see that there is a new column called condition that gives whether a hit was in the 'soil','control' or 'negative' conditions
+
+```{r adding in total_reads, sum_ratio, reads_ratio}
+
+data %>% 
+  select(id, hits_to_bacteria_sequence) %>%
+  mutate(sum_total_reads = sum(hits_to_bacteria_sequence))
+```
+

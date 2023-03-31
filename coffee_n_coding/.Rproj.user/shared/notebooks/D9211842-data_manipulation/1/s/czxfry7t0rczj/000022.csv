@@ -1,0 +1,17 @@
+"0","data %>% 
+  group_by(id, hits_to_bacteria_sequence) %>%
+  mutate(sum_total_reads = sum(hits_to_bacteria_sequence))
+"
+"1","[1m[33mError[39m in `mutate()`:[22m
+[38;5;252m[36mℹ[38;5;252m In argument: `sum_total_reads = sum(hits_to_bacteria_sequence)`.
+[36mℹ[38;5;252m In group 1: `id = ""005d517ab8f6efa378a09d105f8945ef""`, `hits_to_bacteria_sequence = ""0""`.[39m
+[1mCaused by error in `sum()`:[22m
+[33m![39m invalid 'type' (character) of argument
+Backtrace:
+[90m 1. [39mdata %>% group_by(id, hits_to_bacteria_sequence) %>% ...
+[90m 3. [39m[1m[94mdplyr:::mutate.data.frame([39m[22m., sum_total_reads = sum(hits_to_bacteria_sequence)[1m[94m)[39m[22m
+[90m 4. [39mdplyr:::mutate_cols(.data, dplyr_quosures(...), by)
+[90m 6. [39mdplyr:::mutate_col(dots[[i]], data, mask, new_columns)
+[90m 7. [39mmask$eval_all_mutate(quo)
+[90m 8. [39m[1mdplyr[22m (local) eval()
+"

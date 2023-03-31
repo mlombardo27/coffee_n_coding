@@ -1,0 +1,7 @@
+#this function will take a unique ID based on taxon and create a new data table with a column of the sum_total_reads
+
+sum_total_reads = function(data_table, unique_id == ''){
+  select(id == unique_id) 
+  mutate(sum_total_reads = sum(hits_to_bacteria_sequence))
+  return(data_table)
+}
