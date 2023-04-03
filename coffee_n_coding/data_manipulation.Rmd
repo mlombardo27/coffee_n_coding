@@ -65,8 +65,23 @@ now if you look at our 'data' you can see that there is a new column called cond
 
 ```{r adding in total_reads, sum_ratio, reads_ratio}
 
-data %>% 
-  select(id, hits_to_bacteria_sequence) %>%
-  mutate(sum_total_reads = sum(hits_to_bacteria_sequence))
+data <- data %>% 
+  separate(taxon, sep = '; ', c('domain','phylum','class', 'order', 'family', 'genus', 'species'))
+  
+data <- data %>% 
+  group_by(id) %>% 
+  mutate(total_reads = sum(as.numeric(hits_to_bacteria_sequence))) 
+
+sum_controls <- data %>% 
+  group_by(id) %>%  
+  filter(!(condition =='soil')) %>% 
+  mutate(sum_controls = sum(as.numeric(hits_to_bacteria_sequence)))
+
+sum_controls_to_add <- sum_controls %>% 
+  select(id, condition, sum_controls)
+
+data <- data %>% 
+  left_join(sum_controls_to_add)
+
 ```
 
