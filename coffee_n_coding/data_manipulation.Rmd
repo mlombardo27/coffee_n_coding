@@ -63,11 +63,20 @@ colnames(data)[7] <- 'condition'
 
 now if you look at our 'data' you can see that there is a new column called condition that gives whether a hit was in the 'soil','control' or 'negative' conditions
 
-```{r adding in total_reads, sum_ratio, reads_ratio}
+```{r separating the taxon by type, adding total reads per unique ID, adding in the sum_controls for ids, adding sum_test_reads}
 
 data <- data %>% 
   separate(taxon, sep = '; ', c('domain','phylum','class', 'order', 'family', 'genus', 'species'))
-  
+
+total_reads_by_div <- data %>% 
+  group_by(name) %>% 
+  mutate(total_by_div = sum(as.numeric(hits_to_bacteria_sequence))) %>% 
+  select(name,total_by_div) %>% 
+  unique()
+
+data<- data %>% 
+  left_join(total_reads_by_div)
+
 data <- data %>% 
   group_by(id) %>% 
   mutate(total_reads = sum(as.numeric(hits_to_bacteria_sequence))) 
@@ -78,10 +87,62 @@ sum_controls <- data %>%
   mutate(sum_controls = sum(as.numeric(hits_to_bacteria_sequence)))
 
 sum_controls_to_add <- sum_controls %>% 
-  select(id, condition, sum_controls)
+  select(id, sum_controls) %>% 
+  unique()
 
 data <- data %>% 
   left_join(sum_controls_to_add)
 
+sum_test_reads_data <-data %>% 
+  group_by(id) %>% 
+  filter(condition == 'soil') %>% 
+  mutate(sum_test_reads = sum(as.numeric(hits_to_bacteria_sequence))) %>% 
+  select(id, sum_test_reads) %>% 
+  unique()
+
+data <- data %>% 
+  left_join(sum_test_reads_data)
+```
+
+now we can do the maths to get sum ratio and remove the non-hits
+
+```{r doing sum ratio, removing non-hits}
+data <- data %>% 
+  group_by(id) %>% 
+  mutate(sum_ratio = ((sum_controls/total_reads)*100))
+
+data <- data %>% 
+  group_by(id) %>% 
+  mutate(reads_ratio = (sum_controls/sum_test_reads))
+
+non_hits <- data %>% 
+  group_by(id) %>% 
+  filter(sum_ratio > 30) %>% 
+  arrange(sum_ratio)
+
+data_to_keep <- data %>% 
+  group_by(id) %>% 
+  filter(sum_ratio <30)
+
+non_hits_2<- data %>% 
+  group_by(id) %>% 
+  filter(reads_ratio >1 )
+
+data_to_keep<- data_to_keep %>% 
+  group_by(id) %>% 
+  filter(reads_ratio <1)
+
+data_to_keep <- data_to_keep %>% 
+  mutate(percent = ((as.numeric(hits_to_bacteria_sequence))/total_by_div)*100)
+
+x <-data_to_keep %>%
+  group_by(name) %>% 
+  select(genus, percent) 
+
+y <- x %>% group_by(name, genus) %>% mutate(total_percent = sum(percent))
+
+finished_data <- y %>% select(total_percent) %>% unique() %>% write_csv('finished_data.csv')
+
+nonhit_data <- write.csv(rbind(non_hits, non_hits_2), 'non_hit_data.csv')
 ```
 
